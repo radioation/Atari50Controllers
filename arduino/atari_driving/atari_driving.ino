@@ -7,23 +7,22 @@ const byte DRIVING_PIN_2 = 1;  // 8;
 const byte DRIVING_BUTTON_PIN_6 = 12;
 const byte ledPin = 13;
 
-volatile byte state = LOW;
 volatile byte drivingPin1State = LOW;
 volatile byte lastDrivingPin1State = LOW;
 volatile byte currentRotationDir = 0;
-
+volatile int tick = 0;
 
 void handleEncoderInterrupt() {
-  state = !state;
   drivingPin1State = digitalRead(DRIVING_PIN_1);
 
   // check if pulse occured.
-  if (drivingPin1State != lastDrivingPin1State && drivingPin1State == 1) {
+  if (drivingPin1State != lastDrivingPin1State ) { //&& drivingPin1State == 1) {
     // determine direction
     if (digitalRead(DRIVING_PIN_2) != drivingPin1State) {  // CCW
-      currentRotationDir = -1;
+      currentRotationDir = 1; // CCW but atari 50 mouse is the opposite?
+      
     } else {  // CW
-      currentRotationDir = 1;
+      currentRotationDir = -1;  
     }
   }
 
@@ -49,9 +48,8 @@ void setup() {
 
 void loop() {
 
-  digitalWrite(ledPin, state);
   if (currentRotationDir != 0) {
-    Mouse.move(currentRotationDir * 7, 0);
+    Mouse.move(currentRotationDir * 75, 0);
     currentRotationDir = 0;
   }
 
