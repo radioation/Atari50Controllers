@@ -11,13 +11,18 @@ can handle all three controllers.
 
 ## CX30 Paddle Controllers
 The paddle controller has a single fire button and a 1 MOhm potentiometer 
-with just the wiper and one resistive terminal connected.  I'm using the 
-voltage divider described
+with just the wiper and one resistive terminal connected.  I'm originally 
+used the voltage divider described
 [here](https://www.circuitbasics.com/arduino-ohm-meter/) to estimate the 
-rotation of the paddle knob.
+rotation of the paddle knob.   One problem with using the voltage divider
+is the paddle positions affected each others readings.   To address this,
+I've switched to checking the charging time of an
+[RC circuit](https://www.icode.com/analog-to-digital-conversion-with-rc-circuit-in-microcontroller-projects/).   
+I alternate reading the first and second paddle which seems to eliminate 
+the interference. 
 
 I've noticed some problems with this method.  Each paddle has a different 
-estimated maximum value and appear to affect each others readings.  I'll
+estimated maximum value.  I'll
 plan on improving this.
 
 Another problem is translating the paddle readings into joystick 
