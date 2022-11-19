@@ -1,21 +1,22 @@
 #include <Joystick.h>
-
-// voltage divider
-const int Vin = 5;
-float Vout = 0.0f;
-const float ref = 1000.0f;  // 1 M Ohm
+ 
 
 // I/O Pins
-const int PADDLE_1_POT_PIN_9 = 0;  // use analog 0 for paddle 1
-const int PADDLE_2_POT_PIN_5 = 5;  // analog 1
-const int PADDLE_1_BTN_PIN_3 = 0;
-const int PADDLE_1_BTN_PIN_4 = 1;
+const int PADDLE_1_CAP_PIN_9 = 10;  // read from cap
+const int PADDLE_2_CAP_PIN_5 = 11;
+const int PADDLE_1_POT_PIN_9 = 12;  // discharge at resistor
+const int PADDLE_2_POT_PIN_5 = 13;
+const int PADDLE_1_BTN_PIN_3 = 2;
+const int PADDLE_2_BTN_PIN_4 = 3;
+const int PADDLES_ACTIVE = 9;   // use this to turn switch on/off
+
+
 
 // paddle values
-int rVal = 0;
+unsigned long startTime;
+unsigned long elapsedTime;
 float paddle1 = 0;
 float paddle2 = 0;
-float buffer = 0;
 
 int lastButtonState1 = 0;
 int lastButtonState2 = 0;
@@ -34,8 +35,13 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,
 
 void setup() {
   // setup buttons
+  pinMode(PADDLE_1_CAP_PIN_9, INPUT);
+  pinMode(PADDLE_2_CAP_PIN_5, INPUT);
+  pinMode(PADDLE_1_POT_PIN_9, OUTPUT);
+  pinMode(PADDLE_2_POT_PIN_5, OUTPUT);
   pinMode(PADDLE_1_BTN_PIN_3, INPUT_PULLUP);
-  pinMode(PADDLE_1_BTN_PIN_4, INPUT_PULLUP);
+  pinMode(PADDLE_2_BTN_PIN_4, INPUT_PULLUP);
+  pinMode(PADDLES_ACTIVE, INPUT_PULLUP);
 
   // Initialize Joystick Library
   Joystick.begin();
@@ -43,39 +49,37 @@ void setup() {
   Joystick.setYAxisRange(-127, 127);
 }
 
-float computePaddle(int val) {
-  buffer = val * Vin;
-  Vout = (buffer) / 1024.0;
-  buffer = (Vin / Vout) - 1;
-  return ref * buffer;
-}
-
+ 
 void loop() {
-  rVal = analogRead(PADDLE_1_POT_PIN_9);
-  if (rVal) {
-    paddle1 = computePaddle(rVal);
-  }
 
-  rVal = analogRead(PADDLE_2_POT_PIN_5);
-  if (rVal) {
-    paddle2 = computePaddle(rVal);
+  for (int i = 0; i < 2; ++i) {
+    pinMode(PADDLE_1_POT_PIN_9 + i, OUTPUT);    // set discharge pin to output
+    digitalWrite(PADDLE_1_POT_PIN_9 + i, LOW);  // set discharge pin LOW
+    delay(4);                                   // 1 seemed sufficient discharge time in tests but 4 should sufficient the hell out of it.
+    pinMode(PADDLE_1_POT_PIN_9 + i, INPUT);
+    startTime = micros();
+    while (digitalRead(PADDLE_1_CAP_PIN_9 + i) < 1)
+      ;
+    if (i == 0) {
+      paddle1 = micros() - startTime;
+    } else {
+      paddle2 = micros() - startTime;
+    }
   }
-
-  // scale and translate paddle readings.  (This couild use a proper calibration step)
-  float axis_x = -(127.0f * 2.0f * (paddle1 / 700.0f) - 127.0f);
+  // scale and translate paddle readings.  (This could still use a proper calibration step)
+  float axis_x = -(127.0f * 2.0f * (paddle1 / 9000.0f) - 127.0f);
   Joystick.setXAxis(axis_x);
-
-  float axis_y = 127.0f * 2.0f * (paddle2 / 700.0f) - 127.0f;
+  float axis_y = 127.0f * 2.0f * (paddle2 / 9000.0f) - 127.0f;
   Joystick.setYAxis(axis_y);
 
-  // Set buttons  
+  // Set buttons
   int currentButtonState = digitalRead(PADDLE_1_BTN_PIN_3);
   if (currentButtonState != lastButtonState1) {
     Joystick.setButton(0, currentButtonState);
     lastButtonState1 = currentButtonState;
   }
 
-  currentButtonState = digitalRead(PADDLE_1_BTN_PIN_4);
+  currentButtonState = digitalRead(PADDLE_2_BTN_PIN_4);
   if (currentButtonState != lastButtonState2) {
     Joystick.setButton(1, currentButtonState);
     lastButtonState2 = currentButtonState;
