@@ -54,9 +54,6 @@ are connected directly to the Arduino.
 The driving controller is a rotary encoder.  My implementation is based on
 [this](https://howtomechatronics.com/tutorials/arduino/rotary-encoder-works-use-arduino/)
 
-There are some problems with what I'm doing.  I'm seeing some skipping 
-and I'm not handling the speed of rotation.  I plan on improving this.
-
 Like the trackball circuit, a diagram is probably un-necessary.  The joystick pins 
 are connected directly to the Arduino.
 
@@ -64,14 +61,12 @@ are connected directly to the Arduino.
 | --------- | ------- |
 |   1       | D0      |
 |   2       | D1      |
-|   6       | D12     |
+|   6       | D4      |
 |   8       | GND     |
 
 
 ## TODO
-* Improve paddle controller reads
 * Improve driving controller reads.
-  * Estimate rotation velocity
   * Handle contact bounce in hardware.
 * Combine circuits and sketches into a single circuit/sketch 
   and automatically detection which type of controller is 
