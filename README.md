@@ -11,34 +11,32 @@ can handle all three controllers.
 
 ## CX30 Paddle Controllers
 The paddle controller has a single fire button and a 1 MOhm potentiometer 
-with just the wiper and one resistive terminal connected.  I'm originally 
+with just the wiper and one resistive terminal connected.  I originally 
 used the voltage divider described
 [here](https://www.circuitbasics.com/arduino-ohm-meter/) to estimate the 
 rotation of the paddle knob.   One problem with using the voltage divider
-is the paddle positions affected each others readings.   To address this,
+was the paddle positions affected each others readings.   To address this,
 I've switched to checking the charging time of an
 [RC circuit](https://www.icode.com/analog-to-digital-conversion-with-rc-circuit-in-microcontroller-projects/).   
 I alternate reading the first and second paddle which seems to eliminate 
 the interference. 
 
 I've noticed some problems with this method.  Each paddle has a different 
-estimated maximum value.  I'll
-plan on improving this.
-
-Another problem is translating the paddle readings into joystick 
-positions.  This interferes with menu selections when the paddles 
-are plugged in.  I will probably add a switch or button to 
-disable the paddles for menu navigation. 
+estimated maximum value.  I plan on improving this.  Another problem is 
+translating the paddle readings into joystick positions.  This interferes
+with menu selections when the paddles are plugged in.  I will probably 
+add a switch or button to disable the paddles for menu navigation. 
 
 ## CX22  Trackball Controller
-This is largely the code found [here](https://jeffpiepmeier.blogspot.com/2016/08/vintage-atari-cx22-trak-ball-with-usb.html). The trackball controller should be set to _trackball_ mode.  
+This is largely the code found [here](https://jeffpiepmeier.blogspot.com/2016/08/vintage-atari-cx22-trak-ball-with-usb.html). 
+The trackball controller should be set to _trackball_ mode.  
 When in trackball mode, the CX22 figure out both the X and Y direction 
 and speed for you.  I'm translating the trackball movements into 
 mouse movements and using the button as a 'space-bar' press to match
-the default fire setup in _Atari 50: 5200 " Missile Command_
+the default fire setup in _Atari 50: 5200 **Missile Command**_
 
-The circuit diagram is probably unnecessary.  The joystick pins 
-are connected directly to the Arduino.
+The circuit diagram is probably unnecessary, because the wiring is 
+very simple.  The DE9 pins are connected directly to the Arduino.
 
 |  Joystick | Arduino |
 | --------- | ------- |
@@ -52,9 +50,10 @@ are connected directly to the Arduino.
 
 ## CX20  Driving Controller
 The driving controller is a rotary encoder.  My implementation is based on
-[this](https://howtomechatronics.com/tutorials/arduino/rotary-encoder-works-use-arduino/)
+[this](https://howtomechatronics.com/tutorials/arduino/rotary-encoder-works-use-arduino/).
+I added a counter to handle the rotation speed.
 
-Like the trackball circuit, a diagram is probably un-necessary.  The joystick pins 
+Like the trackball circuit, a diagram is probably un-necessary.  The DE9 pins 
 are connected directly to the Arduino.
 
 |  Joystick | Arduino |
