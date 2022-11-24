@@ -37,7 +37,6 @@ byte lastRotationDir = 0;
 int drivingCounter = 0;
 int drivingScale = 10;
 
-
 // Trackball I/O Pins
 const byte TRACKBALL_PIN_1 = 0;  // also used by driving controller
 const byte TRACKBALL_PIN_2 = 1;  // also used by driving controller
@@ -53,8 +52,12 @@ int trackballMotionX = LOW;
 int trackballDirectionY = LOW;
 int trackballMotionY = LOW;
 
-
 // general values
+const byte BUTTON_A = 5;
+const byte BUTTON_B = 6;
+const byte BUTTON_C = 7;
+const byte ZERO_JOYSTICK_SWITCH = 9;
+
 enum CONTROLLER_TYPE { NOT_FOUND,
                        PADDLE_CTRL,
                        DRIVING_CTRL,
@@ -95,6 +98,12 @@ void setup() {
   pinMode(TRACKBALL_PIN_4, INPUT_PULLUP);
   pinMode(DRIVING_BUTTON_PIN_6, INPUT_PULLUP);
 
+  // setup shared buttons
+  pinMode(BUTTON_A, INPUT_PULLUP);
+  pinMode(BUTTON_B, INPUT_PULLUP);
+  pinMode(BUTTON_C, INPUT_PULLUP);
+  pinMode(ZERO_JOYSTICK_SWITCH, INPUT_PULLUP);
+
   // Initialize Joystick Library
   Joystick.begin();
   Joystick.setXAxisRange(-127, 127);
@@ -117,8 +126,8 @@ void detectControllers() {
   digitalWrite(PADDLE_1_POT_PIN_9, LOW);
   delay(5);
   pinMode(PADDLE_1_POT_PIN_9, INPUT);
+  delay(20);
   auto isPaddle = digitalRead(PADDLE_1_CAP_PIN_9);
-  delay(15);
   if (isPaddle == HIGH) {
     controllerType = PADDLE_CTRL;
     return;
@@ -189,12 +198,10 @@ void updateTrackball() {
 
   if (trackballMotionX != xold) {
     Mouse.move(trackballDirectionX * trackballScaleX, 0);
-    digitalWrite(13, 1);
   }
 
   if (trackballMotionY != yold) {
     Mouse.move(0, trackballDirectionY * trackballScaleY);
-    digitalWrite(13, 1);
   }
 
   // Atari 50 defaults to spacebar for fire button.
@@ -230,8 +237,17 @@ void updateDriving() {
       drivingCounter = 1;
     }
 
-
-    Mouse.move(currentRotationDir * min(drivingCounter * drivingScale, 127), 0);
+    // Mouse.move has a maximum step size of 127. 
+    int delta = drivingCounter * drivingScale;
+    if(delta < 128) {
+      Mouse.move(currentRotationDir * delta, 0);
+    } else {
+      while( delta > 128 ) {
+        Mouse.move(currentRotationDir * 127, 0);
+        delta -=127;
+      }
+      Mouse.move(currentRotationDir * delta, 0);
+    } 
 
     lastRotationDir = currentRotationDir;
   } else {
@@ -270,4 +286,5 @@ void loop() {
         break;
       }
   }
+  
 }
