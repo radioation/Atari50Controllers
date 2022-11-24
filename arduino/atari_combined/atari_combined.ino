@@ -166,12 +166,20 @@ void updatePaddles() {
       paddle2 = micros() - startTime;
     }
   }
-  // scale and translate paddle readings.  (This could still use a proper calibration step)
-  float joy1_x = -(127.0f * 2.0f * (paddle1 / 9000.0f) - 127.0f);
-  Joystick.setXAxis(joy1_x);
-  float joy2_x = -(127.0f * 2.0f * (paddle2 / 9000.0f) - 127.0f);
-  Joystick2.setXAxis(joy2_x);
 
+  // check if PADDLES_ACTIVE switch is close.  
+  if( digitalRead(PADDLES_ACTIVE) == LOW ) { 
+    // scale and translate paddle readings.  (This could still use a proper calibration step)
+    float joy1_x = -(127.0f * 2.0f * (paddle1 / 9000.0f) - 127.0f);
+    Joystick.setXAxis(joy1_x);
+    float joy2_x = -(127.0f * 2.0f * (paddle2 / 9000.0f) - 127.0f);
+    Joystick2.setXAxis(joy2_x); 
+  } else {
+    // center the joystick output when deactivated.
+    Joystick.setXAxis(0);
+    Joystick2.setXAxis(0);
+  }
+  
   // Set buttons
   int currentButtonState = digitalRead(PADDLE_1_BTN_PIN_3);
   if (currentButtonState != lastButtonState1) {
