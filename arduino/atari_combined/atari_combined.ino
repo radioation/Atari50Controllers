@@ -318,7 +318,7 @@ void updateButtons() {
     lastButtonStateA = currentButtonState;
   }
 
-  currentButtonState = digitalRead(EXTRA_BUTTON_A);
+  currentButtonState = digitalRead(EXTRA_BUTTON_B);
   if (currentButtonState != lastButtonStateB) {
     if (!currentButtonState) {
       Keyboard.press(98);
