@@ -23,9 +23,9 @@ const float paddle1min = 0.66f;
 const float paddle2min = 0.66f;
 
 // Driving I/O Pins
-const byte DRIVING_PIN_1 = 0;         // also used by trackball controller
-const byte DRIVING_PIN_2 = 1;         // also used by trackball controller
-const byte DRIVING_BUTTON_PIN_6 = 4;  // also used by trackball controller
+const byte DRIVING_PIN_1 = 0;  // also used by trackball controller
+const byte DRIVING_PIN_2 = 1;  // also used by trackball controller
+const byte BUTTON_PIN_6 = 4;   // also used by trackball controller
 // driving values
 byte drivingPin1State = LOW;
 byte lastDrivingPin1State = LOW;
@@ -42,7 +42,7 @@ const byte TRACKBALL_PIN_1 = 0;  // also used by driving controller
 const byte TRACKBALL_PIN_2 = 1;  // also used by driving controller
 const byte TRACKBALL_PIN_3 = 2;
 const byte TRACKBALL_PIN_4 = 3;
-const byte TRACKBALL_BUTTON_PIN_6 = 4;  // also used by driving controller
+// const byte TRACKBALL_BUTTON_PIN_6 = 4;  // also used by driving controller
 // trackball values
 const int trackballScaleX = 7;
 const int trackballScaleY = 7;
@@ -52,10 +52,15 @@ int trackballMotionX = LOW;
 int trackballDirectionY = LOW;
 int trackballMotionY = LOW;
 
-// general values
-const byte BUTTON_A = 5;
-const byte BUTTON_B = 6;
-const byte BUTTON_C = 7;
+// extra buttons/switches
+const byte EXTRA_BUTTON_A = 5;
+const byte EXTRA_BUTTON_B = 6;
+const byte EXTRA_BUTTON_C = 7;
+int lastButtonStateA = 0;
+int lastButtonStateB = 0;
+int lastButtonStateC = 0;
+
+
 const byte ZERO_JOYSTICK_SWITCH = 9;
 
 enum CONTROLLER_TYPE { NOT_FOUND,
@@ -74,14 +79,14 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,
                    false, false, false);  // No accelerator, brake, or steering
 
 Joystick_ Joystick2(JOYSTICK_DEFAULT_REPORT_ID + 1,
-                   JOYSTICK_TYPE_JOYSTICK,
-                   2, 0,                  // Button Count, Hat Switch Count
-                   true, true, false,     // X and Y, but no Z Axis
-                   false, false, false,   // No Rx, Ry, or Rz
-                   false, false,          // No rudder or throttle
-                   false, false, false);  // No accelerator, brake, or steering
+                    JOYSTICK_TYPE_JOYSTICK,
+                    2, 0,                  // Button Count, Hat Switch Count
+                    true, true, false,     // X and Y, but no Z Axis
+                    false, false, false,   // No Rx, Ry, or Rz
+                    false, false,          // No rudder or throttle
+                    false, false, false);  // No accelerator, brake, or steering
 
-void setup() { 
+void setup() {
   // setup paddles
   pinMode(PADDLE_1_CAP_PIN_9, INPUT);
   pinMode(PADDLE_2_CAP_PIN_5, INPUT);
@@ -96,12 +101,12 @@ void setup() {
   pinMode(DRIVING_PIN_2, INPUT_PULLUP);
   pinMode(TRACKBALL_PIN_3, INPUT_PULLUP);
   pinMode(TRACKBALL_PIN_4, INPUT_PULLUP);
-  pinMode(DRIVING_BUTTON_PIN_6, INPUT_PULLUP);
+  pinMode(BUTTON_PIN_6, INPUT_PULLUP);
 
   // setup shared buttons
-  pinMode(BUTTON_A, INPUT_PULLUP);
-  pinMode(BUTTON_B, INPUT_PULLUP);
-  pinMode(BUTTON_C, INPUT_PULLUP);
+  pinMode(EXTRA_BUTTON_A, INPUT_PULLUP);
+  pinMode(EXTRA_BUTTON_B, INPUT_PULLUP);
+  pinMode(EXTRA_BUTTON_C, INPUT_PULLUP);
   pinMode(ZERO_JOYSTICK_SWITCH, INPUT_PULLUP);
 
   // Initialize Joystick Library
@@ -145,8 +150,8 @@ void detectControllers() {
       controllerType = TRACKBALL_CTRL;
       return;  // exit out, it's a trackball.
     }
-    if (pin1 == LOW && pin2 == LOW) {  // could be driving or trackball, but go with DRIVING 
-      controllerType = DRIVING_CTRL; 
+    if (pin1 == LOW && pin2 == LOW) {  // could be driving or trackball, but go with DRIVING
+      controllerType = DRIVING_CTRL;
     }
   }
 }
@@ -167,19 +172,19 @@ void updatePaddles() {
     }
   }
 
-  // check if PADDLES_ACTIVE switch is close.  
-  if( digitalRead(PADDLES_ACTIVE) == LOW ) { 
+  // check if PADDLES_ACTIVE switch is close.
+  if (digitalRead(PADDLES_ACTIVE) == LOW) {
     // scale and translate paddle readings.  (This could still use a proper calibration step)
     float joy1_x = -(127.0f * 2.0f * (paddle1 / 9000.0f) - 127.0f);
     Joystick.setXAxis(joy1_x);
     float joy2_x = -(127.0f * 2.0f * (paddle2 / 9000.0f) - 127.0f);
-    Joystick2.setXAxis(joy2_x); 
+    Joystick2.setXAxis(joy2_x);
   } else {
     // center the joystick output when deactivated.
     Joystick.setXAxis(0);
     Joystick2.setXAxis(0);
   }
-  
+
   // Set buttons
   int currentButtonState = digitalRead(PADDLE_1_BTN_PIN_3);
   if (currentButtonState != lastButtonState1) {
@@ -191,6 +196,27 @@ void updatePaddles() {
   if (currentButtonState != lastButtonState2) {
     Joystick2.setButton(0, currentButtonState);
     lastButtonState2 = currentButtonState;
+  }
+}
+
+void updatePaddleButtons() {
+  // Set buttons
+  int currentButtonState = digitalRead(EXTRA_BUTTON_A);
+  if (currentButtonState != lastButtonStateA) {
+    Joystick.setButton(1, currentButtonState);
+    lastButtonStateA = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_B);
+  if (currentButtonState != lastButtonStateB) {
+    Joystick.setButton(2, currentButtonState);
+    lastButtonStateB = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_C);
+  if (currentButtonState != lastButtonStateC) {
+    Joystick2.setButton(1, currentButtonState);
+    lastButtonStateC = currentButtonState;
   }
 }
 
@@ -213,10 +239,14 @@ void updateTrackball() {
   }
 
   // Atari 50 defaults to spacebar for fire button.
-  if (!digitalRead(TRACKBALL_BUTTON_PIN_6)) {
-    Keyboard.press(' ');
-  } else {
-    Keyboard.release(' ');
+  int currentButtonState = digitalRead(BUTTON_PIN_6);
+  if (currentButtonState != lastButtonState1) {
+    if (!currentButtonState) {
+      Keyboard.press(' ');
+    } else {
+      Keyboard.release(' ');
+    }
+    lastButtonState1 = currentButtonState;
   }
 }
 
@@ -245,17 +275,17 @@ void updateDriving() {
       drivingCounter = 1;
     }
 
-    // Mouse.move has a maximum step size of 127. 
+    // Mouse.move has a maximum step size of 127.
     int delta = drivingCounter * drivingScale;
-    if(delta < 128) {
+    if (delta < 128) {
       Mouse.move(currentRotationDir * delta, 0);
     } else {
-      while( delta > 128 ) {
+      while (delta > 128) {
         Mouse.move(currentRotationDir * 127, 0);
-        delta -=127;
+        delta -= 127;
       }
       Mouse.move(currentRotationDir * delta, 0);
-    } 
+    }
 
     lastRotationDir = currentRotationDir;
   } else {
@@ -263,36 +293,79 @@ void updateDriving() {
   }
 
   // Atari 50 defaults to spacebar for fire button with mouse controls.
-  if (!digitalRead(DRIVING_BUTTON_PIN_6)) {
-    Keyboard.press(' ');
-  } else {
-    Keyboard.release(' ');
+
+  int currentButtonState = digitalRead(BUTTON_PIN_6);
+  if (currentButtonState != lastButtonState1) {
+    if (!currentButtonState) {
+      Keyboard.press(' ');
+    } else {
+      Keyboard.release(' ');
+    }
+    lastButtonState1 = currentButtonState;
   }
 }
 
+void updateButtons() {
+
+  // Set button keypresses
+  int currentButtonState = digitalRead(EXTRA_BUTTON_A);
+  if (currentButtonState != lastButtonStateA) {
+    if (!currentButtonState) {
+      Keyboard.press(97);
+    } else {
+      Keyboard.release(97);
+    }
+    lastButtonStateA = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_B);
+  if (currentButtonState != lastButtonStateB) {
+    if (!currentButtonState) {
+      Keyboard.press(98);
+    } else {
+      Keyboard.release(98);
+    }
+    lastButtonStateB = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_C);
+  if (currentButtonState != lastButtonStateC) {
+    if (!currentButtonState) {
+      Keyboard.press(99);
+    } else {
+      Keyboard.release(99);
+    }
+    lastButtonStateC = currentButtonState;
+  }
+}
 
 void loop() {
   switch (controllerType) {
     case NOT_FOUND:
-      { 
+      {
         detectControllers();
         break;
       }
     case PADDLE_CTRL:
-      { 
+      {
         updatePaddles();
+        updatePaddleButtons();
         break;
       }
     case DRIVING_CTRL:
-      { 
+      {
         updateDriving();
+        updateButtons();
         break;
       }
     case TRACKBALL_CTRL:
-      { 
+      {
         updateTrackball();
+        updateButtons();
         break;
       }
   }
-  
 }
+
+
+                                                                                                                                                                                                                                             
