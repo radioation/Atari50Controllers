@@ -49,9 +49,9 @@ The Atari joystick controller is very simple.  It has 4 switches that pull down 
 the Atari DE9 port a fire button that pulls down pin 6. 
 
 # The Circuit
-This circuit:
-![Combined Schematic](https://github.com/radioation/Atari50Controllers/blob/master/images/combined.pdf)
-Can handle all 4 controller types.   The images folder has simplified circuits that handle the 
+This circuit can be found
+[here](https://github.com/radioation/Atari50Controllers/blob/master/images/combined.pdf).
+It can handle all 4 controller types.   The images folder has simplified circuits that handle the 
 paddle, driving, or trackball/joystick controllers individually.   The sketch should work with any
 of them.
 
