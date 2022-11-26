@@ -38,10 +38,10 @@ int drivingCounter = 0;
 int drivingScale = 10;
 
 // Trackball I/O Pins
-const byte TRACKBALL_PIN_1 = 0;  // also used by driving controller
-const byte TRACKBALL_PIN_2 = 1;  // also used by driving controller
-const byte TRACKBALL_PIN_3 = 2;
-const byte TRACKBALL_PIN_4 = 3;
+const byte JOYSTICK_TRACKBALL_PIN_1 = 0;  // also used by driving controller
+const byte JOYSTICK_TRACKBALL_PIN_2 = 1;  // also used by driving controller
+const byte JOYSTICK_TRACKBALL_PIN_3 = 2;
+const byte JOYSTICK_TRACKBALL_PIN_4 = 3;
 // const byte TRACKBALL_BUTTON_PIN_6 = 4;  // also used by driving controller
 // trackball values
 const int trackballScaleX = 7;
@@ -51,6 +51,9 @@ int trackballDirectionX = LOW;
 int trackballMotionX = LOW;
 int trackballDirectionY = LOW;
 int trackballMotionY = LOW;
+
+
+
 
 // extra buttons/switches
 const byte EXTRA_BUTTON_A = 5;
@@ -63,16 +66,17 @@ int lastButtonStateC = 0;
 
 const byte ZERO_JOYSTICK_SWITCH = 9;
 
-enum CONTROLLER_TYPE { NOT_FOUND,
+enum CONTROLLER_TYPE { UNKNOWN_CTRL,
                        PADDLE_CTRL,
                        DRIVING_CTRL,
-                       TRACKBALL_CTRL };
-CONTROLLER_TYPE controllerType = NOT_FOUND;
+                       TRACKBALL_CTRL,
+                       JOYSTICK_CTRL };
+CONTROLLER_TYPE controllerType = UNKNOWN_CTRL;
 
 // setup joystick
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,
                    JOYSTICK_TYPE_JOYSTICK,
-                   2, 0,                  // Button Count, Hat Switch Count
+                   4, 0,                  // Button Count, Hat Switch Count
                    true, true, false,     // X and Y, but no Z Axis
                    false, false, false,   // No Rx, Ry, or Rz
                    false, false,          // No rudder or throttle
@@ -99,8 +103,8 @@ void setup() {
   // setup driving and trackball pins
   pinMode(DRIVING_PIN_1, INPUT_PULLUP);
   pinMode(DRIVING_PIN_2, INPUT_PULLUP);
-  pinMode(TRACKBALL_PIN_3, INPUT_PULLUP);
-  pinMode(TRACKBALL_PIN_4, INPUT_PULLUP);
+  pinMode(JOYSTICK_TRACKBALL_PIN_3, INPUT_PULLUP);
+  pinMode(JOYSTICK_TRACKBALL_PIN_4, INPUT_PULLUP);
   pinMode(BUTTON_PIN_6, INPUT_PULLUP);
 
   // setup shared buttons
@@ -109,7 +113,7 @@ void setup() {
   pinMode(EXTRA_BUTTON_C, INPUT_PULLUP);
   pinMode(ZERO_JOYSTICK_SWITCH, INPUT_PULLUP);
 
-  // Initialize Joystick Library
+  // Initialize Joystick Library                            
   Joystick.begin();
   Joystick.setXAxisRange(-127, 127);
   Joystick.setYAxisRange(-127, 127);
@@ -144,14 +148,20 @@ void detectControllers() {
   for (int i = 0; i < 32767; ++i) {  // 32767 might be excessive.
     auto pin1 = digitalRead(DRIVING_PIN_1);
     auto pin2 = digitalRead(DRIVING_PIN_2);
-    auto pin3 = digitalRead(TRACKBALL_PIN_3);
-    auto pin4 = digitalRead(TRACKBALL_PIN_4);
+    auto pin3 = digitalRead(JOYSTICK_TRACKBALL_PIN_3);
+    auto pin4 = digitalRead(JOYSTICK_TRACKBALL_PIN_4);
     if (pin4 == LOW && pin3 == LOW) {  // left/right is trackball ctr
       controllerType = TRACKBALL_CTRL;
       return;  // exit out, it's a trackball.
     }
     if (pin1 == LOW && pin2 == LOW) {  // could be driving or trackball, but go with DRIVING
       controllerType = DRIVING_CTRL;
+    }
+    if (controllerType == UNKNOWN_CTRL) {
+      // if only one is low, it might be a joystick
+      if (pin1 + pin2 + pin3 + pin4 == 3) {
+        controllerType = JOYSTICK_CTRL;
+      }
     }
   }
 }
@@ -188,34 +198,34 @@ void updatePaddles() {
   // Set buttons
   int currentButtonState = digitalRead(PADDLE_1_BTN_PIN_3);
   if (currentButtonState != lastButtonState1) {
-    Joystick.setButton(0, currentButtonState);
+    Joystick.setButton(0, !currentButtonState);
     lastButtonState1 = currentButtonState;
   }
 
   currentButtonState = digitalRead(PADDLE_2_BTN_PIN_4);
   if (currentButtonState != lastButtonState2) {
-    Joystick2.setButton(0, currentButtonState);
+    Joystick2.setButton(0, !currentButtonState);
     lastButtonState2 = currentButtonState;
   }
 }
 
-void updatePaddleButtons() {
+void updateExtraPaddleButtons() {
   // Set buttons
   int currentButtonState = digitalRead(EXTRA_BUTTON_A);
   if (currentButtonState != lastButtonStateA) {
-    Joystick.setButton(1, currentButtonState);
+    Joystick.setButton(1, !currentButtonState);
     lastButtonStateA = currentButtonState;
   }
 
   currentButtonState = digitalRead(EXTRA_BUTTON_B);
   if (currentButtonState != lastButtonStateB) {
-    Joystick.setButton(2, currentButtonState);
+    Joystick.setButton(2, !currentButtonState);
     lastButtonStateB = currentButtonState;
   }
 
   currentButtonState = digitalRead(EXTRA_BUTTON_C);
   if (currentButtonState != lastButtonStateC) {
-    Joystick2.setButton(1, currentButtonState);
+    Joystick2.setButton(1, !currentButtonState);
     lastButtonStateC = currentButtonState;
   }
 }
@@ -225,10 +235,10 @@ void updateTrackball() {
   int xold = trackballMotionX;
   int yold = trackballMotionY;
 
-  trackballDirectionX = digitalRead(TRACKBALL_PIN_1) * 2 - 1;
-  trackballMotionX = digitalRead(TRACKBALL_PIN_2);
-  trackballDirectionY = digitalRead(TRACKBALL_PIN_3) * 2 - 1;
-  trackballMotionY = digitalRead(TRACKBALL_PIN_4);
+  trackballDirectionX = digitalRead(JOYSTICK_TRACKBALL_PIN_1) * 2 - 1;
+  trackballMotionX = digitalRead(JOYSTICK_TRACKBALL_PIN_2);
+  trackballDirectionY = digitalRead(JOYSTICK_TRACKBALL_PIN_3) * 2 - 1;
+  trackballMotionY = digitalRead(JOYSTICK_TRACKBALL_PIN_4);
 
   if (trackballMotionX != xold) {
     Mouse.move(trackballDirectionX * trackballScaleX, 0);
@@ -305,7 +315,7 @@ void updateDriving() {
   }
 }
 
-void updateButtons() {
+void updateExtraButtons() {
 
   // Set button keypresses
   int currentButtonState = digitalRead(EXTRA_BUTTON_A);
@@ -339,9 +349,62 @@ void updateButtons() {
   }
 }
 
+void updateJoystick() {
+  auto up = digitalRead(DRIVING_PIN_1);
+  auto down = digitalRead(DRIVING_PIN_2);
+  auto left = digitalRead(JOYSTICK_TRACKBALL_PIN_3);
+  auto right = digitalRead(JOYSTICK_TRACKBALL_PIN_4);
+  int joy_x = 0;
+  int joy_y = 0;
+  if (up == LOW) {
+    joy_y = -127;
+  }
+  if (down == LOW) {
+    joy_y = 127;
+  }
+  if (left == LOW) {
+    joy_x = -127;
+  }
+  if (right == LOW) {
+    joy_x = 127;
+  }
+  Joystick.setXAxis(joy_x);
+  Joystick.setYAxis(joy_y);
+
+  // handle actual button
+  int currentButtonState = digitalRead(BUTTON_PIN_6);
+  if (currentButtonState != lastButtonState1) {
+    Joystick.setButton(0, !currentButtonState);
+    lastButtonState1 = currentButtonState;
+  }
+}
+
+void updateExtraJoystickButtons() {
+
+  // Set button keypresses
+  int currentButtonState = digitalRead(EXTRA_BUTTON_A);
+  if (currentButtonState != lastButtonStateA) {
+    Joystick.setButton(1, !currentButtonState);
+    lastButtonStateA = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_B);
+  if (currentButtonState != lastButtonStateB) {
+    Joystick.setButton(2, !currentButtonState);
+    lastButtonStateB = currentButtonState;
+  }
+
+  currentButtonState = digitalRead(EXTRA_BUTTON_C);
+  if (currentButtonState != lastButtonStateC) {
+    Joystick.setButton(3, !currentButtonState);
+    lastButtonStateC = currentButtonState;
+  }
+}
+
+
 void loop() {
   switch (controllerType) {
-    case NOT_FOUND:
+    case UNKNOWN_CTRL:
       {
         detectControllers();
         break;
@@ -349,23 +412,26 @@ void loop() {
     case PADDLE_CTRL:
       {
         updatePaddles();
-        updatePaddleButtons();
+        updateExtraPaddleButtons();
         break;
       }
     case DRIVING_CTRL:
       {
         updateDriving();
-        updateButtons();
+        updateExtraButtons();
         break;
       }
     case TRACKBALL_CTRL:
       {
         updateTrackball();
-        updateButtons();
+        updateExtraButtons();
+        break;
+      }
+    case JOYSTICK_CTRL:
+      {
+        updateJoystick();
+        updateExtraJoystickButtons();
         break;
       }
   }
 }
-
-
-                                                                                                                                                                                                                                             
