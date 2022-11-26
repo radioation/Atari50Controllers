@@ -35,6 +35,10 @@ The driving controller is a rotary encoder.  My implementation is based on
 [this](https://howtomechatronics.com/tutorials/arduino/rotary-encoder-works-use-arduino/).
 I added a counter to handle the rotation speed.
 
+## CX40 Joystick
+The joystick controller is extremely simple.  It has 4 switches that pull down pins 1-4 of
+the Atari DE9 port a fire button that pulls down pin 6.   
+
 # Usage
 Coming Soon...
 
